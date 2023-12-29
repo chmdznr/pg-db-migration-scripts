@@ -14,7 +14,7 @@ PORT="5432"
 # Read the CSV file line by line and perform the restoration
 while IFS=';' read -r table database schema; do
     # Skip the header line
-    if [[ "$table" == "table_name" ]]; then
+    if [ "$table" = "table_name" ]; then
         continue
     fi
 
@@ -22,30 +22,16 @@ while IFS=';' read -r table database schema; do
     dumpfile="$DUMP_DIR/$table.dump"
 
     # Check if the dump file exists
-    if [[ ! -f "$dumpfile" ]]; then
+    if [ ! -f "$dumpfile" ]; then
         echo "Dump file for table $table not found. Skipping..."
         continue
     fi
 
     echo "Restoring table $table to database $database, schema $schema"
 
-    # Connect to the database and restore the table within a transaction
-    psql -U "$USERNAME" -h "$HOST" -p "$PORT" -d "$database" << EOF
-    -- Start a transaction
-    BEGIN;
-
-    -- Disable foreign key constraint checking
-    SET session_replication_role = replica;
-
-    -- Restore the table
-    \i $dumpfile
-
-    -- Re-enable foreign key constraint checking
-    SET session_replication_role = DEFAULT;
-
-    -- Commit the transaction
-    COMMIT;
-EOF
+    # Disable foreign key constraint checking, restore the table, and re-enable checking
+    pg_restore -U "$USERNAME" -h "$HOST" -p "$PORT" \
+        --dbname="$database" --schema="$schema" --table="$table" "$dumpfile"
 
 done < "$MAPPING_CSV"
 
