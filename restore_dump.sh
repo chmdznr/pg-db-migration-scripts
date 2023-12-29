@@ -12,7 +12,7 @@ HOST="10.46.1.195"
 PORT="5432"
 
 # Read the CSV file line by line and perform the restoration
-while IFS=',' read -r table database schema; do
+while IFS=';' read -r table database schema; do
     # Skip the header line
     if [[ "$table" == "table_name" ]]; then
         continue
