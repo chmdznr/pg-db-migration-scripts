@@ -31,7 +31,7 @@ while IFS=';' read -r table database schema; do
 
     # Disable foreign key constraint checking, restore the table, and re-enable checking
     pg_restore -U "$USERNAME" -h "$HOST" -p "$PORT" \
-        --dbname="$database" --schema="$schema" --table="$table" "$dumpfile"
+        --dbname="$database" --schema="$schema" --table="$table" "$dumpfile" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
 
 done < "$MAPPING_CSV"
 
