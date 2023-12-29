@@ -1,0 +1,2 @@
+localhost:5433:your_db_name:your_username:your_password
+pg-01-bimtek:5432:*:your_username2:your_password2
