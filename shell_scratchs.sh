@@ -16,3 +16,9 @@ pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbuser" --schema="
 pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbuser" --schema="public" --table="group_role" "/data/bak/group_role.dump" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
 pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbuser" --schema="public" --table="menus" "/data/bak/menus.dump" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
 pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbuser" --schema="public" --table="role_menu" "/data/bak/role_menu.dump" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
+
+# test manual restore dbarsip
+pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbarsip" --schema="naskahdinas" --table="naskah_masuks" "/data/bak/naskah_masuks.dump" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
+
+# test manual dump dbarsip
+pg_dump -U "accesspdn2" -h "localhost" -p "5433" -d "srikandi" -Fc -t naskah_masuks > "/data/bak/naskah_masuks.dump"

@@ -50,6 +50,8 @@ SHOW max_connections;
 
 -- add file_ttd column with type character varying to table daftar_penandatangans 
 ALTER TABLE daftar_penandatangans ADD COLUMN file_ttd character varying;
+-- update filename field with file_ttd field
+update daftar_penandatangans set filename=file_ttd where 1=1;
 
 -- check table row count for current database
 SELECT 
@@ -65,3 +67,31 @@ ORDER BY
 
 -- list SCHEMA inside current database
 SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema';
+
+-- copy table structure from other schema to `public`
+DO $$
+DECLARE
+    row record;
+BEGIN
+    FOR row IN SELECT table_schema, table_name
+               FROM information_schema.tables
+               WHERE table_schema NOT IN ('public', 'pg_catalog', 'information_schema', 'pg_toast')
+               AND table_type = 'BASE TABLE'
+    LOOP
+        EXECUTE 'CREATE TABLE public.' || quote_ident(row.table_name) || ' (LIKE ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' INCLUDING ALL)';
+    END LOOP;
+END $$;
+
+-- delete all tables from other SCHEMA
+DO $$
+DECLARE
+    row record;
+BEGIN
+    FOR row IN SELECT table_schema, table_name
+               FROM information_schema.tables
+               WHERE table_schema NOT IN ('public', 'pg_catalog', 'information_schema', 'pg_toast')
+               AND table_type = 'BASE TABLE'
+    LOOP
+        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
+    END LOOP;
+END $$;

@@ -15,7 +15,7 @@ HOST="10.46.1.195"
 PORT="5432"
 
 # Read the CSV file line by line and perform the restoration
-while IFS=';' read -r table database schema; do
+while IFS=';' read -r table database target_schema; do
     # Skip the header line
     if [ "$table" = "table_name" ]; then
         continue
@@ -30,11 +30,20 @@ while IFS=';' read -r table database schema; do
         continue
     fi
 
-    echo "Restoring table $table to database $database, schema $schema"
+    echo "Restoring table $table to database $database in public schema"
 
-    # Disable foreign key constraint checking, restore the table, and re-enable checking
+    # Restore the table to the public schema
     pg_restore -U "$USERNAME" -h "$HOST" -p "$PORT" \
-        --dbname="$database" --schema="$schema" --table="$table" "$dumpfile" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
+        --dbname="$database" --schema="public" --table="$table" "$dumpfile" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
+
+    # Check if the target schema is not 'public' and then alter the schema of the table
+    if [ "$target_schema" != "public" ]; then
+        echo "Altering schema of table $table to $target_schema"
+        psql -U "$USERNAME" -h "$HOST" -p "$PORT" -d "$database" -c \
+            "ALTER TABLE public.$table SET SCHEMA $target_schema;"
+    else
+        echo "Target schema for table $table is already public, skipping schema alteration"
+    fi
 
 done < "$MAPPING_CSV"
 
