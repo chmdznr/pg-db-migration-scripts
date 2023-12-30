@@ -39,6 +39,15 @@ WHERE conrelid = 'user_roles'::regclass AND contype = 'c';
 
 -- copy model_has_roles to user_roles
 insert into user_roles(user_id, role_id, is_default, is_active, created_at, updated_at) select model_id as user_id, role_id as role_id, 'Y', 'Y', now(), now() from model_has_roles;
+-- update user_roles from users
+UPDATE user_roles
+SET 
+    organisasi_id = users.organisasi_id,
+    send_outside = users.send_outside,
+    updated_at = now()
+FROM users
+WHERE user_roles.user_id = users.id;
+
 
 -- disable all triggers
 ALTER TABLE table_name DISABLE TRIGGER ALL;
@@ -95,3 +104,26 @@ BEGIN
         EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
     END LOOP;
 END $$;
+
+
+-- create readonly user
+CREATE USER anri_ro WITH PASSWORD 'very.secure.passwd';
+
+GRANT CONNECT ON DATABASE dbuser TO anri_ro;
+GRANT CONNECT ON DATABASE dbmaster TO anri_ro;
+GRANT CONNECT ON DATABASE dbarsip TO anri_ro;
+-- loop on all database
+\c dbuser
+
+DO $$
+DECLARE
+    sch text;
+BEGIN
+    FOR sch IN SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema'
+    LOOP
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO anri_ro', sch);
+        EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO anri_ro', sch);
+        EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT ON TABLES TO anri_ro', sch);
+    END LOOP;
+END
+$$;
