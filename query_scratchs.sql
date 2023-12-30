@@ -10,3 +10,58 @@ SELECT nspname FROM pg_namespace WHERE nspname NOT IN ('pg_catalog', 'informatio
 
 -- assign user as superuser
 ALTER USER srikandi WITH SUPERUSER;
+
+-- logging status
+SHOW log_destination;
+SHOW logging_collector;
+SHOW log_directory;
+SHOW log_filename;
+SHOW log_min_messages;
+SHOW log_min_error_statement;
+SHOW log_min_duration_statement;
+SHOW log_min_duration_sample;
+
+-- check table size in current database
+SELECT 
+  table_schema || '.' || table_name AS "full_table_name",
+  pg_size_pretty(pg_total_relation_size('"' || table_schema || '"."' || table_name || '"')) AS "size"
+FROM 
+  information_schema.tables
+WHERE 
+  table_schema NOT IN ('pg_catalog', 'information_schema')
+ORDER BY 
+  pg_total_relation_size('"' || table_schema || '"."' || table_name || '"') DESC;
+
+-- check constraint of a TABLE
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid = 'user_roles'::regclass AND contype = 'c';
+
+-- copy model_has_roles to user_roles
+insert into user_roles(user_id, role_id, is_default, is_active, created_at, updated_at) select model_id as user_id, role_id as role_id, 'Y', 'Y', now(), now() from model_has_roles;
+
+-- disable all triggers
+ALTER TABLE table_name DISABLE TRIGGER ALL;
+-- enable all triggers
+ALTER TABLE table_name ENABLE TRIGGER ALL;
+
+-- show max connection
+SHOW max_connections;
+
+-- add file_ttd column with type character varying to table daftar_penandatangans 
+ALTER TABLE daftar_penandatangans ADD COLUMN file_ttd character varying;
+
+-- check table row count for current database
+SELECT 
+  schemaname, 
+  relname AS tablename, 
+  n_live_tup AS rowcount 
+FROM 
+  pg_stat_all_tables 
+WHERE
+  schemaname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+ORDER BY 
+  n_live_tup DESC;
+
+-- list SCHEMA inside current database
+SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema';

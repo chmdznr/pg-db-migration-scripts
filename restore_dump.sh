@@ -3,8 +3,11 @@
 # Specify the directory where your dump files are located
 DUMP_DIR="/data/bak"
 
-# Path to the CSV file with the mappings
-MAPPING_CSV="restore_mapping.csv"
+# Default CSV file
+DEFAULT_MAPPING_CSV="restore_mapping.csv"
+
+# Use the first command line argument as the CSV file path, default to DEFAULT_MAPPING_CSV if not provided
+MAPPING_CSV="${1:-$DEFAULT_MAPPING_CSV}"
 
 # Define your PostgreSQL server details
 USERNAME="srikandi"
