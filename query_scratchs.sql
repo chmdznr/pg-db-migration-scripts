@@ -37,6 +37,22 @@ SELECT conname, pg_get_constraintdef(oid)
 FROM pg_constraint
 WHERE conrelid = 'user_roles'::regclass AND contype = 'c';
 
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid = 'lampirans'::regclass AND contype = 'c';
+
+ALTER TABLE lampirans DROP CONSTRAINT lampirans_naskah_check;
+
+--        conname         |                                              pg_get_constraintdef
+------------------------+-----------------------------------------------------------------------------------------------------------------
+ --lampirans_naskah_check | CHECK (((naskah)::text = ANY (ARRAY[('KELUAR'::character varying)::text, ('MASUK'::character varying)::text])))
+
+-- fix constraint
+ALTER TABLE lampirans ADD CONSTRAINT lampirans_naskah_check CHECK (((naskah)::text = ANY (ARRAY[('KELUAR'::character varying)::text, ('MASUK'::character varying)::text, ('MANDIRI'::character varying)::text])));
+
+alter table lampirans set schema naskahdinas;
+
+
 -- copy model_has_roles to user_roles
 insert into user_roles(user_id, role_id, is_default, is_active, created_at, updated_at) select model_id as user_id, role_id as role_id, 'Y', 'Y', now(), now() from model_has_roles;
 -- update user_roles from users
@@ -61,6 +77,28 @@ SHOW max_connections;
 ALTER TABLE daftar_penandatangans ADD COLUMN file_ttd character varying;
 -- update filename field with file_ttd field
 update daftar_penandatangans set filename=file_ttd where 1=1;
+
+-- add fields to table berkas_naskah 
+--organisasi_id	bigint
+ALTER TABLE berkas_naskah ADD COLUMN organisasi_id bigint;
+--public_organisasi_id	bigint
+ALTER TABLE berkas_naskah ADD COLUMN public_organisasi_id bigint;
+-- then continue restore manually
+-- then change SCHEMA
+alter table berkas_naskah set schema berkas;
+
+-- add fields to table berkas_mandiris
+--unit_pengolah	character varying
+ALTER TABLE berkas_mandiris ADD COLUMN unit_pengolah character varying;
+--tahun_musnah_serah	character varying
+ALTER TABLE berkas_mandiris ADD COLUMN tahun_musnah_serah character varying;
+--kurun_waktu_manual	character varying
+ALTER TABLE berkas_mandiris ADD COLUMN kurun_waktu_manual character varying;
+--jumlah_arsip	character varying
+ALTER TABLE berkas_mandiris ADD COLUMN jumlah_arsip character varying;
+-- then continue restore manually
+-- then change SCHEMA
+alter table berkas_mandiris set schema berkas;
 
 -- check table row count for current database
 SELECT 
