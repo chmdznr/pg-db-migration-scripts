@@ -8,16 +8,16 @@
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/history-naskah --remove local/skdv2/history-naskah
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/lampiran-penyelesaian --remove local/skdv2/lampiran-penyelesaian
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/lampiran --remove local/skdv2/lampiran
-/home/srikandi/minio-binaries/mc mirror skdv2/persuratan/logo-instansi --remove --newer-than 60d local/skdv2/logo-instansi
+/home/srikandi/minio-binaries/mc mirror --remove --newer-than 60d skdv2/persuratan/logo-instansi local/skdv2/logo-instansi
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/mandiri --remove local/skdv2/mandiri
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/naskah-keluar --remove local/skdv2/naskah-keluar
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/naskah-mandiri --remove local/skdv2/naskah-mandiri
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/naskah-masuk --remove local/skdv2/naskah-masuk
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/naskah-view --remove local/skdv2/naskah-view
 # /home/srikandi/minio-binaries/mc mirror skdv2/persuratan/penyelesaian --remove local/skdv2/persuratan/penyelesaian
-/home/srikandi/minio-binaries/mc mirror skdv2/persuratan/template_naskah_dinas --remove --newer-than 60d local/skdv2/template_naskah_dinas
-/home/srikandi/minio-binaries/mc mirror skdv2/persuratan/user-profile --remove --newer-than 60d local/skdv2/user-profile
+/home/srikandi/minio-binaries/mc mirror --remove --newer-than 60d skdv2/persuratan/template_naskah_dinas local/skdv2/template_naskah_dinas
+/home/srikandi/minio-binaries/mc mirror --remove --newer-than 60d skdv2/persuratan/user-profile local/skdv2/user-profile
 
-/home/srikandi/minio-binaries/mc mirror local/skdv2/logo-instansi --remove local/srikandi-prod/logo-instansi
-/home/srikandi/minio-binaries/mc mirror local/skdv2/user-profile --remove local/srikandi-prod/user-profile
-/home/srikandi/minio-binaries/mc mirror local/skdv2/template_naskah_dinas --remove local/srikandi-prod/template_naskah_dinas
+/home/srikandi/minio-binaries/mc mirror --remove local/skdv2/logo-instansi local/srikandi-prod/logo-instansi
+/home/srikandi/minio-binaries/mc mirror --remove local/skdv2/user-profile local/srikandi-prod/user-profile
+/home/srikandi/minio-binaries/mc mirror --remove local/skdv2/template_naskah_dinas local/srikandi-prod/template_naskah_dinas
