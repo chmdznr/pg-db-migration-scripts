@@ -100,6 +100,11 @@ ALTER TABLE berkas_mandiris ADD COLUMN jumlah_arsip character varying;
 -- then change SCHEMA
 alter table berkas_mandiris set schema berkas;
 
+
+alter table jobs set schema naskahdinas;
+alter table failed_jobs set schema naskahdinas;
+alter table version_naskahs set schema naskahdinas;
+
 -- check table row count for current database
 SELECT 
   schemaname, 
@@ -165,3 +170,76 @@ BEGIN
     END LOOP;
 END
 $$;
+
+
+-- example join using dblink
+SELECT
+    nk.*,
+    dbjn.id,
+    dbjn.jenis_naskah
+FROM
+    naskahdinas.naskah_keluars nk
+    LEFT JOIN (
+        SELECT *
+        FROM
+            dblink(
+                'dbname=dbmaster',
+                'SELECT id, jenis_naskah FROM jenis_naskahs'
+            ) AS jn(id bigint, jenis_naskah varchar)
+    ) as dbjn on dbjn.id = nk.jenis_naskah_id
+where
+    nk.organisasi_created_id = '912'
+order by nk.id desc
+limit 10;
+
+-- selamatkan tabel grup_tembusans, daftar_tembusans, group_role, menus, role_menu dari dbuser ke public
+alter table grup_tembusans set schema public;
+alter table daftar_tembusans set schema public;
+alter table group_role set schema public;
+alter table menus set schema public;
+alter table role_menu set schema public;
+
+-- truncate all tables except grup_tembusans, daftar_tembusans, group_role, menus, role_menu
+DO $$
+DECLARE
+    row record;
+BEGIN
+    FOR row IN SELECT table_schema, table_name
+               FROM information_schema.tables
+               WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+               AND table_type = 'BASE TABLE'
+               AND table_name NOT IN ('grup_tembusans', 'daftar_tembusans', 'group_role', 'menus', 'role_menu')
+    LOOP
+        EXECUTE 'TRUNCATE TABLE ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
+    END LOOP;
+END $$;
+
+
+-- drop all tables that has name started with 'tmp_'
+DO $$
+DECLARE
+    row record;
+BEGIN
+    FOR row IN SELECT table_schema, table_name
+               FROM information_schema.tables
+               WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+               AND table_type = 'BASE TABLE'
+               AND table_name LIKE 'tmp_%'
+    LOOP
+        EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
+    END LOOP;
+END $$;
+
+-- truncate all tables in the current schema
+DO $$
+DECLARE
+    row record;
+BEGIN
+    FOR row IN SELECT table_schema, table_name
+               FROM information_schema.tables
+               WHERE table_schema NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+               AND table_type = 'BASE TABLE'
+    LOOP
+        EXECUTE 'TRUNCATE TABLE ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
+    END LOOP;
+END $$;
