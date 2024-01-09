@@ -30,3 +30,9 @@ pg_restore -U "srikandi" -h "10.46.1.195" -p "5432" --dbname="dbarsip" --schema=
 
 # test manual dump dbarsip
 pg_dump -U "accesspdn2" -h "localhost" -p "5433" -d "srikandi" -Fc -t naskah_masuks > "/data/bak/naskah_masuks.dump"
+
+# backup sp2kp_v2
+pg_dump -U sp2kp -h localhost -p 5432 -d sp2kp_v2 -Fc > sp2kp_v2.dump
+
+# restore sp2kp_v2
+pg_restore -U sp2kp -h localhost -p 5432 -d sp2kp_collab -Fc sp2kp_v2.dump

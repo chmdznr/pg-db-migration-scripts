@@ -243,3 +243,101 @@ BEGIN
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name) || ' CASCADE';
     END LOOP;
 END $$;
+
+
+-- change DATABASE owner
+alter database sp2kp_collab owner to sp2kp;
+
+-- truncate cascade table
+truncate table master_ref.komoditas cascade;
+truncate table audit.audit_trail cascade;
+
+-- copy content using dblink
+-- Disable foreign key checks
+ALTER TABLE bispro.harga_harian DISABLE TRIGGER ALL;
+
+-- Copy data from source to target using dblink
+INSERT INTO bispro.harga_harian
+    (kode_provinsi, kode_kab_kota, sumber_data_id, satuan_id, satuan_str, kuantitas, harga, pasar_id, tanggal, deskripsi, catatan, is_active, created_at, created_by, updated_at, updated_by, variant_id, komoditas_id, status_verifikasi_1, verifikasi_1_by, verifikasi_1_at, status_verifikasi_2, verifikasi_2_by, verifikasi_2_at, is_closed, penyebab_id, keterangan_verifikasi_1, keterangan_verifikasi_2, status_verifikasi_3, verifikasi_3_by, verifikasi_3_at, keterangan_verifikasi_3, produk_id)
+SELECT
+    'XX' as kode_provinsi,
+    id_kabupaten AS kode_kab_kota,
+    cast(1 as bigint) AS sumber_data_id,
+    0 AS satuan_id,
+    id_satuan AS satuan_str,
+    kuantitas,
+    harga,
+    id_pasar AS pasar_id,
+    tanggal AS tanggal,
+    deskripsi,
+    catatan,
+    active::int::boolean AS is_active,
+    insert_timestamp AS created_at,
+    insert_by AS created_by,
+    now() AS updated_at,
+    lastupdate_by AS updated_by,
+    id_variant AS variant_id,
+    id_komoditas AS komoditas_id,
+    NULL AS status_verifikasi_1,
+    NULL AS verifikasi_1_by,
+    NULL AS verifikasi_1_at,
+    NULL AS status_verifikasi_2,
+    NULL AS verifikasi_2_by,
+    NULL AS verifikasi_2_at,
+    true AS is_closed,
+    NULL AS penyebab_id,
+    NULL AS keterangan_verifikasi_1,
+    NULL AS keterangan_verifikasi_2,
+    NULL AS status_verifikasi_3,
+    NULL AS verifikasi_3_by,
+    NULL AS verifikasi_3_at,
+    NULL AS keterangan_verifikasi_3,
+    NULL AS produk_id
+FROM
+    dblink('dbname=sp2kp_v1',  -- Source database connection
+            'SELECT id, id_kabupaten, app_id, id_satuan, kuantitas, harga, id_pasar, tanggal_harga, deskripsi, catatan, active, insert_timestamp, insert_by, lastupdate_timestamp, lastupdate_by, id_variant, id_komoditas, day_date FROM public.trans_harga_harian WHERE EXTRACT(YEAR FROM tanggal_harga) = 2023 AND harga > 0::money')  -- Source query
+    AS source_data (
+        id INT,
+        id_kabupaten INT,
+        app_id INT,
+        id_satuan VARCHAR(20),
+        kuantitas INT,
+        harga MONEY,
+        id_pasar INT,
+        tanggal TIMESTAMP,
+        deskripsi TEXT,
+        catatan TEXT,
+        active BIT,
+        insert_timestamp TIMESTAMP,
+        insert_by INT,
+        lastupdate_timestamp TIMESTAMP,
+        lastupdate_by INT,
+        id_variant INT,
+        id_komoditas INT,
+        day_date DATE
+    );
+
+-- Enable foreign key checks
+ALTER TABLE bispro.harga_harian ENABLE TRIGGER ALL;
+
+update bispro.harga_harian set satuan_id=master_ref.satuan.id from master_ref.satuan where bispro.harga_harian.satuan_str=master_ref.satuan.display;
+
+-- list blocked query
+select pid,
+       usename,
+       pg_blocking_pids(pid) as blocked_by,
+       query as blocked_query
+from pg_stat_activity
+where cardinality(pg_blocking_pids(pid)) > 0;
+
+-- cancel running query
+SELECT pg_cancel_backend(1556541), pg_terminate_backend(1556541);
+
+-- update value based on dblink table
+UPDATE bispro.harga_harian
+SET kode_kab_kota = v.kode_kemendagri
+FROM dblink('dbname=sp2kp_v1', 'SELECT id, kode_kemendagri FROM master_kabupaten') AS v(id INT, kode_kemendagri VARCHAR)
+WHERE kode_kab_kota::int = v.id;
+
+UPDATE bispro.harga_harian
+SET kode_provinsi = LEFT(kode_kab_kota, 2);

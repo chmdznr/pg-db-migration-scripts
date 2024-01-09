@@ -20,7 +20,7 @@ for dumpfile in "$DUMP_DIR"/*.dump; do
     table=$(basename "$dumpfile" .dump)
     echo "Restoring table $table from $dumpfile to the public schema in $DATABASE_NAME"
     pg_restore -U "$USERNAME" -h "$HOST" -p "$PORT" \
-        --dbname="$DATABASE_NAME" --schema="public" --table="$table" "$dumpfile" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
+        --dbname="$DATABASE_NAME" --schema="public" --table="$table" -Fc "$dumpfile" --disable-triggers --superuser=postgres --data-only --no-owner --jobs=4
 done
 
 echo "All tables have been restored to the public schema in $DATABASE_NAME"
